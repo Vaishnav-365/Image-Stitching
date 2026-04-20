@@ -13,6 +13,8 @@ def extract_points_from_matches(kp1, kp2, matches):
 
 
 def compute_homography(src_pts, dst_pts):
+    if len(src_pts) < 4 or len(dst_pts) < 4:
+        raise ValueError("Need at least 4 points for homography")
     """
     Compute homography using RANSAC
     """
