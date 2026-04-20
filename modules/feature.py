@@ -54,3 +54,19 @@ def save_image(output_path, image):
         os.makedirs(folder)
 
     cv2.imwrite(output_path, image)
+
+
+def detect_sift_features(image):
+    sift = cv2.SIFT_create()
+    keypoints, descriptors = sift.detectAndCompute(image, None)
+    return keypoints, descriptors
+
+
+def draw_keypoints(image, keypoints):
+    output_image = cv2.drawKeypoints(
+        image,
+        keypoints,
+        None,
+        flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS
+    )
+    return output_image
