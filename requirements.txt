@@ -1,0 +1,6 @@
+opencv-contrib-python
+numpy
+matplotlib
+# scikit-image   # advanced image processing
+# tqdm           # progress bars (multi-image stitching)
+# pillow         # alternative image handling
