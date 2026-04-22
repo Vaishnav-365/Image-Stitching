@@ -9,6 +9,7 @@ from modules.feature import (
 from modules.matcher import match_features
 from modules.homography import extract_points_from_matches, compute_homography
 import cv2
+import numpy as np
 
 def main():
     img1_path = "images/left.jpg"
