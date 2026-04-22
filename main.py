@@ -57,6 +57,7 @@ def main():
     np.savetxt("H.txt", H)
 
     print("Homography Matrix:\n", H)
+    print("Mapping: Image1 → Image2")
     print("Inliers:", mask.sum())
 
     matched_img = cv2.drawMatches(
