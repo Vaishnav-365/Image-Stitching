@@ -54,6 +54,8 @@ def main():
 
     H, mask = compute_homography(src_pts, dst_pts)
 
+    np.savetxt("H.txt", H)
+
     print("Homography Matrix:\n", H)
     print("Inliers:", mask.sum())
 
