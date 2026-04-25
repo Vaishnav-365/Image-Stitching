@@ -5,6 +5,7 @@ from modules.feature import (
     show_image,
     detect_sift_features,
     save_image,
+    extract_matched_points,
     draw_keypoints
 )
 from modules.matcher import match_features, draw_matches
@@ -35,6 +36,11 @@ def main():
 
     good_matches = match_features(des1, des2)
 
+    src_pts, dst_pts = extract_matched_points(kp1, kp2, good_matches)
+
+    print("Matched source points:", len(src_pts))
+    print("Matched destination points:", len(dst_pts))
+
 
     print("Good matches after ratio test:", len(good_matches))
 
@@ -60,7 +66,8 @@ def main():
 
     save_image("outputs/keypoints_image1.jpg", img1_kp)
     save_image("outputs/keypoints_image2.jpg", img2_kp)
-
+    save_image("outputs/feature_matches.jpg", match_img)
+    
     show_image("Left Image", img1)
     show_image("Right Image", img2)
     show_image("Gray Left Image", gray1)

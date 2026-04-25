@@ -56,8 +56,8 @@ def save_image(output_path, image):
     cv2.imwrite(output_path, image)
 
 
-def detect_sift_features(image):
-    sift = cv2.SIFT_create()
+def detect_sift_features(image, nfeatures=2000):
+    sift = cv2.SIFT_create(nfeatures=nfeatures)
     keypoints, descriptors = sift.detectAndCompute(image, None)
     return keypoints, descriptors
 
@@ -70,3 +70,19 @@ def draw_keypoints(image, keypoints):
         flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS
     )
     return output_image
+def preprocess_for_sift(image):
+    gray = convert_to_gray(image)
+
+    # improves contrast slightly
+    gray = cv2.equalizeHist(gray)
+
+    return gray
+def extract_matched_points(kp1, kp2, matches):
+    src_pts = []
+    dst_pts = []
+
+    for match in matches:
+        src_pts.append(kp1[match.queryIdx].pt)
+        dst_pts.append(kp2[match.trainIdx].pt)
+
+    return src_pts, dst_pts
