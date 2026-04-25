@@ -86,3 +86,23 @@ def extract_matched_points(kp1, kp2, matches):
         dst_pts.append(kp2[match.trainIdx].pt)
 
     return src_pts, dst_pts
+def get_features(image, max_features=2000):
+    """
+    Complete pipeline: preprocess + SIFT detection
+    """
+    gray = preprocess_for_sift(image)
+
+    sift = cv2.SIFT_create(nfeatures=max_features)
+    keypoints, descriptors = sift.detectAndCompute(gray, None)
+
+    return keypoints, descriptors, gray
+def validate_features(des1, des2):
+    if des1 is None or des2 is None:
+        print("Error: descriptors are None")
+        return False
+
+    if len(des1) < 10 or len(des2) < 10:
+        print("Error: not enough features")
+        return False
+
+    return True

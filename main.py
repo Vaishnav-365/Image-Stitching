@@ -10,6 +10,7 @@ from modules.feature import (
 )
 from modules.matcher import match_features, draw_matches
 from modules.matcher import match_features
+from modules.feature import get_features, validate_features
 from modules.feature import preprocess_for_sift
 from modules.homography import extract_points_from_matches, compute_homography
 import cv2
@@ -25,14 +26,17 @@ def main():
     img1 = resize_if_needed(img1)
     img2 = resize_if_needed(img2)
 
-    gray1 = preprocess_for_sift(img1)
-    gray2 = preprocess_for_sift(img2)
+    kp1, des1, gray1 = get_features(img1)
+    kp2, des2, gray2 = get_features(img2)
+
+    if not validate_features(des1, des2):
+        print("Feature validation failed. Exiting.")
+        return
 
     print("Image 1 loaded successfully. Shape:", img1.shape)
     print("Image 2 loaded successfully. Shape:", img2.shape)
 
-    kp1, des1 = detect_sift_features(gray1)
-    kp2, des2 = detect_sift_features(gray2)
+
 
     good_matches = match_features(des1, des2)
 
@@ -64,9 +68,9 @@ def main():
     img1_kp = draw_keypoints(img1, kp1)
     img2_kp = draw_keypoints(img2, kp2)
 
-    save_image("outputs/keypoints_image1.jpg", img1_kp)
-    save_image("outputs/keypoints_image2.jpg", img2_kp)
-    save_image("outputs/feature_matches.jpg", match_img)
+    save_image("outputs/final_keypoints1.jpg", draw_keypoints(img1, kp1))
+    save_image("outputs/final_keypoints2.jpg", draw_keypoints(img2, kp2))
+    save_image("outputs/final_matches.jpg", match_img)
     
     show_image("Left Image", img1)
     show_image("Right Image", img2)
