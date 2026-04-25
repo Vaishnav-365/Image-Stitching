@@ -6,6 +6,7 @@ from modules.feature import (
     detect_sift_features,
     draw_keypoints
 )
+from modules.matcher import match_features, draw_matches
 from modules.matcher import match_features
 from modules.homography import extract_points_from_matches, compute_homography
 import cv2
@@ -29,6 +30,14 @@ def main():
 
     kp1, des1 = detect_sift_features(gray1)
     kp2, des2 = detect_sift_features(gray2)
+
+    good_matches = match_features(des1, des2)
+
+    print("Good matches after ratio test:", len(good_matches))
+
+    match_img = draw_matches(img1, kp1, img2, kp2, good_matches)
+
+    show_image("Feature Matches", match_img)
 
     matches = match_features(des1, des2)
 
