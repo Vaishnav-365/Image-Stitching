@@ -106,3 +106,8 @@ def validate_features(des1, des2):
         return False
 
     return True
+
+def log_feature_info(name, keypoints, descriptors):
+    print(f"[{name}] Keypoints: {len(keypoints)}")
+    if descriptors is not None:
+        print(f"[{name}] Descriptor shape: {descriptors.shape}")

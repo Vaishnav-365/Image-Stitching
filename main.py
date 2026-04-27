@@ -12,6 +12,7 @@ from modules.feature import (
 
 from modules.matcher import match_features, draw_matches
 from modules.homography import extract_points_from_matches, compute_homography
+from modules.stitch import stitch_images
 
 import cv2
 import numpy as np
@@ -66,25 +67,30 @@ def main():
     match_img = draw_matches(img1, kp1, img2, kp2, good_matches)
     save_image("outputs/final_matches.jpg", match_img)
 
-    # Extract matched points
-    matched_src_pts, matched_dst_pts = extract_matched_points(kp1, kp2, good_matches)
-
-    print("Matched source points:", len(matched_src_pts))
-    print("Matched destination points:", len(matched_dst_pts))
-
     # Homography
     src_pts, dst_pts = extract_points_from_matches(kp1, kp2, good_matches)
     H, mask = compute_homography(src_pts, dst_pts)
-
-    np.savetxt("outputs/H.txt", H)
+    if H is None:
+        print("Homography failed! Cannot stitch.")
+        return
 
     print("Homography Matrix:\n", H)
     print("Mapping: Image1 → Image2")
     print("Inliers:", int(mask.sum()))
+    print("Inlier Ratio:", mask.sum() / len(good_matches))
 
     # RANSAC inlier matches
     inlier_matches = [m for i, m in enumerate(good_matches) if mask[i]]
     print("Good matches after RANSAC:", len(inlier_matches))
+    
+    print("Starting stitching...")
+
+    stitched = stitch_images(img1, img2, H)
+
+    # Save result
+    save_image("outputs/panorama.jpg", stitched)
+
+    
 
     inlier_img = cv2.drawMatches(
         img1,
@@ -107,6 +113,8 @@ def main():
     show_image("Keypoints Image 2", img2_kp)
     show_image("Feature Matches", match_img)
     show_image("RANSAC Inlier Matches", inlier_img)
+    # Show result
+    show_image("Stitched Panorama", stitched)
 
 
 if __name__ == "__main__":
