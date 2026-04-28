@@ -4,9 +4,6 @@ from modules.feature import (
     show_image,
     save_image,
     draw_keypoints,
-    get_features,
-    validate_features,
-    log_feature_info
 )
 
 from modules.matcher import match_features, draw_matches
@@ -49,6 +46,11 @@ def main():
         save_image(f"outputs/matches_{i}_{j}.jpg", match_img)
         show_image(f"Matches {i} → {j}", match_img)
 
+    panorama, features, matches_dict, pairwise_H, global_H = build_panorama(images)
+
+    if panorama is None:
+        print("Panorama generation failed. Check logs.")
+        return
     save_image("outputs/panorama.jpg", panorama)
     show_image("Final Panorama", panorama)
 

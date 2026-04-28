@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from modules.feature import get_features, validate_features
+from modules.feature import get_features
 from modules.matcher import match_features
 from modules.homography import compute_homography, extract_points_from_matches
 from modules.transform import compute_global_homographies, normalize_homography
@@ -36,6 +36,8 @@ def compute_pairwise_homographies(images):
         kp2, des2 = features[i + 1]
 
         matches = match_features(des1, des2)
+        if len(matches) < 30:
+            print(f"[WARNING] Low match count between {i}-{i+1}")
         matches_dict[(i, i + 1)] = matches
 
         print(f"\n[Pair {i} → {i+1}] Total Matches: {len(matches)}")
@@ -58,6 +60,9 @@ def compute_pairwise_homographies(images):
 
         inliers = int(mask.sum())
         inlier_ratio = inliers / len(matches)
+        if inlier_ratio < 0.4:
+            print(f"[ERROR] Very weak homography for pair {i}-{i+1}")
+            raise ValueError("Homography rejected due to low inlier ratio")
 
         print(f"[Pair {i} → {i+1}] Inliers: {inliers}")
         print(f"[Pair {i} → {i+1}] Inlier Ratio: {inlier_ratio:.3f}")
@@ -70,6 +75,8 @@ def compute_pairwise_homographies(images):
         H = H_refined if H_refined is not None else H
 
         H = normalize_homography(H)
+        if not np.isfinite(H).all():
+            raise ValueError("Invalid homography (Inf/NaN detected)")
 
         print(f"[Pair {i} → {i+1}] Homography:\n{H}")
 
@@ -85,8 +92,8 @@ def compute_pairwise_homographies(images):
         if np.any(np.isnan(transformed)):
             raise ValueError("Invalid homography (NaN detected)")
 
-        if abs(H[2][0]) > 0.01 or abs(H[2][1]) > 0.01:
-            print(f"[WARNING] Strong perspective distortion in pair {i}-{i+1}")
+        if abs(H[2][0]) > 0.02 or abs(H[2][1]) > 0.02:
+            print(f"[WARNING] High perspective distortion in pair {i}-{i+1}")
 
         pairwise_H[(i, i + 1)] = H
 
@@ -124,20 +131,22 @@ def warp_all_images(images, global_H):
 def build_panorama(images, ref_index=1):
     print("\n========== BUILDING PANORAMA ==========")
 
-    # Get everything
-    features, matches_dict, pairwise_H = compute_pairwise_homographies(images)
+    try:
+        features, matches_dict, pairwise_H = compute_pairwise_homographies(images)
 
-    print("\n========== GLOBAL HOMOGRAPHIES ==========")
+        print("\n========== GLOBAL HOMOGRAPHIES ==========")
+        global_H = compute_global_homographies(pairwise_H, ref_index)
 
-    global_H = compute_global_homographies(pairwise_H, ref_index)
+        for i, H in global_H.items():
+            print(f"[Image {i} → Ref]:\n{H}")
 
-    for i, H in global_H.items():
-        print(f"[Image {i} → Ref]:\n{H}")
+        print("\n========== WARPING IMAGES ==========")
+        panorama = warp_all_images(images, global_H)
 
-    print("\n========== WARPING IMAGES ==========")
+        print(f"\nFinal Panorama Size: {panorama.shape}")
 
-    panorama = warp_all_images(images, global_H)
+        return panorama, features, matches_dict, pairwise_H, global_H
 
-    print(f"\nFinal Panorama Size: {panorama.shape}")
-
-    return panorama, features, matches_dict, pairwise_H, global_H
+    except Exception as e:
+        print("\n[PIPELINE ERROR]", str(e))
+        return None, None, None, None, None

@@ -56,12 +56,6 @@ def save_image(output_path, image):
     cv2.imwrite(output_path, image)
 
 
-def detect_sift_features(image, nfeatures=2000):
-    sift = cv2.SIFT_create(nfeatures=nfeatures)
-    keypoints, descriptors = sift.detectAndCompute(image, None)
-    return keypoints, descriptors
-
-
 def draw_keypoints(image, keypoints):
     output_image = cv2.drawKeypoints(
         image,
@@ -77,15 +71,7 @@ def preprocess_for_sift(image):
     gray = cv2.equalizeHist(gray)
 
     return gray
-def extract_matched_points(kp1, kp2, matches):
-    src_pts = []
-    dst_pts = []
 
-    for match in matches:
-        src_pts.append(kp1[match.queryIdx].pt)
-        dst_pts.append(kp2[match.trainIdx].pt)
-
-    return src_pts, dst_pts
 def get_features(image, max_features=2000):
     """
     Complete pipeline: preprocess + SIFT detection
@@ -96,16 +82,6 @@ def get_features(image, max_features=2000):
     keypoints, descriptors = sift.detectAndCompute(gray, None)
 
     return keypoints, descriptors, gray
-def validate_features(des1, des2):
-    if des1 is None or des2 is None:
-        print("Error: descriptors are None")
-        return False
-
-    if len(des1) < 10 or len(des2) < 10:
-        print("Error: not enough features")
-        return False
-
-    return True
 
 def log_feature_info(name, keypoints, descriptors):
     print(f"[{name}] Keypoints: {len(keypoints)}")
