@@ -6,14 +6,8 @@ from modules.feature import (
     draw_keypoints,
 )
 
-from modules.matcher import match_features, draw_matches
-from modules.homography import extract_points_from_matches, compute_homography
-from modules.transform import normalize_homography, compute_global_homographies
+from modules.matcher import draw_matches
 from modules.pipeline import build_panorama
-
-import cv2
-import numpy as np
-
 
 def main():
     img_paths = [
