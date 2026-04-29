@@ -15,7 +15,22 @@ def get_identity_homography():
     return np.eye(3)
 
 def normalize_homography(H):
-    return H / H[2, 2]
+    """
+    Normalize homography so bottom-right value = 1
+    and scale remains stable
+    """
+    if H is None:
+        return None
+
+    if H[2, 2] == 0:
+        return H
+
+    H = H / H[2, 2]
+
+    # Optional: stabilize small values
+    H[np.abs(H) < 1e-10] = 0
+
+    return H
 
 def compute_global_homographies(pairwise_H, ref_index):
     """

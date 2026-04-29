@@ -5,6 +5,8 @@ from modules.feature import get_features
 from modules.matcher import match_features
 from modules.homography import compute_homography, extract_points_from_matches
 from modules.transform import compute_global_homographies, normalize_homography
+from modules.projection import cylindrical_projection
+from modules.postprocess import crop_black_borders, sharpen_image
 
 def compute_pairwise_homographies(images):
     features = []
@@ -105,7 +107,8 @@ def warp_all_images(images, global_H):
     for i,img in enumerate(images):
         h,w = img.shape[:2]
         corners = np.float32([[0,0],[w,0],[w,h],[0,h]]).reshape(-1,1,2)
-        transformed = cv2.perspectiveTransform(corners,global_H[i])
+        H_norm = normalize_homography(global_H[i])
+        transformed = cv2.perspectiveTransform(corners, H_norm)
         all_corners.append(transformed)
 
     all_corners = np.concatenate(all_corners, axis=0)
@@ -113,18 +116,45 @@ def warp_all_images(images, global_H):
     [xmin, ymin] = np.int32(all_corners.min(axis=0).ravel())
     [xmax, ymax] = np.int32(all_corners.max(axis=0).ravel())
 
-    translation = np.array([[1,0,-xmin],[0,1,-ymin],[0,0,1]])
+    translation = np.array([[1,0,-xmin],[0,1,-ymin],[0,0,1]], dtype=np.float32)
 
     width = xmax - xmin
     height = ymax - ymin
 
-    panorama = np.zeros((height, width, 3), dtype=np.uint8)
+    panorama = np.zeros((height, width, 3), dtype=np.float32)
+    weight = np.zeros((height, width), dtype=np.float32)
 
     for i, img in enumerate(images):
-        H = translation @ global_H[i]
+        H = normalize_homography(translation @ global_H[i])
         warped = cv2.warpPerspective(img, H, (width, height))
-        mask = np.any(warped != 0, axis=2)
-        panorama[mask] = warped[mask]
+        
+        # mask where image exists
+        mask = np.any(warped != 0, axis=2).astype(np.float32)
+
+        # distance transform → gives smooth falloff from edges
+        dist = cv2.distanceTransform(mask.astype(np.uint8), cv2.DIST_L2, 5)
+
+        # normalize weights
+        dist = dist / (dist.max() + 1e-6)
+
+        # sharpen weights (reduce blending region)
+        dist = dist ** 3
+
+        # expand to 3 channels
+        weight_map = np.stack([dist]*3, axis=2)
+
+        # accumulate weighted pixels
+        panorama += warped * weight_map
+        weight += dist
+    
+    # avoid division by zero
+    weight = np.maximum(weight, 1e-6)
+
+    # normalize
+    panorama = panorama / weight[:, :, np.newaxis]
+
+    # convert back to uint8
+    panorama = panorama.astype(np.uint8)
     
     return panorama
 
@@ -132,7 +162,17 @@ def build_panorama(images, ref_index=1):
     print("\n========== BUILDING PANORAMA ==========")
 
     try:
-        features, matches_dict, pairwise_H = compute_pairwise_homographies(images)
+        # Step 1: Create cylindrical images ONCE here
+        print("\n========== CYLINDRICAL PROJECTION ==========")
+
+        cyl_images = []
+        for i, img in enumerate(images):
+            cyl = cylindrical_projection(img)
+            cyl_images.append(cyl)
+            print(f"[Image {i}] Cylindrical projection done")
+
+        # Step 2: Use cylindrical images everywhere
+        features, matches_dict, pairwise_H = compute_pairwise_homographies(cyl_images)
 
         print("\n========== GLOBAL HOMOGRAPHIES ==========")
         global_H = compute_global_homographies(pairwise_H, ref_index)
@@ -143,7 +183,13 @@ def build_panorama(images, ref_index=1):
         print("\n========== WARPING IMAGES ==========")
         panorama = warp_all_images(images, global_H)
 
-        print(f"\nFinal Panorama Size: {panorama.shape}")
+        print("\n========== CROPPING ==========")
+        panorama = crop_black_borders(panorama)
+
+        print("\n========== SHARPENING ==========")
+        panorama = sharpen_image(panorama)
+
+        print(f"\nFinal Panorama Size (Cropped): {panorama.shape}")
 
         return panorama, features, matches_dict, pairwise_H, global_H
 

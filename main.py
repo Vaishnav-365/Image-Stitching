@@ -8,6 +8,7 @@ from modules.feature import (
 
 from modules.matcher import draw_matches
 from modules.pipeline import build_panorama
+from modules.projection import cylindrical_projection
 
 def main():
     img_paths = [
@@ -20,6 +21,10 @@ def main():
 
     for i, img in enumerate(images):
         print(f"Image {i} loaded successfully. Shape:", img.shape)
+
+    for i, img in enumerate(images):
+        cyl = cylindrical_projection(img)
+        show_image(f"Cylindrical Image {i}", cyl)
 
     print("\nBuilding panorama using pipeline...")
     
