@@ -56,7 +56,6 @@ image_stitching/
 ├── requirements.txt
 ├── .gitignore
 └── README.md
-
 ```
 
 ---
@@ -68,28 +67,24 @@ image_stitching/
 ``` 
 git clone https://github.com/Vaishnav-365/Image-Stitching.git
 cd Image-Stitching
-
 ```
 
 ### 2. Create virtual environment
 
 ```
 python -m venv venv
-
 ```
 ### 3. Activate environment
 
 ```
 venv\Scripts\activate # Windows
 source venv/bin/activate # Linux/Mac
-
 ```
 
 ### 4. Install dependencies
 
 ```
 pip install -r requirements.txt
-
 ```
 
 ---
@@ -100,7 +95,6 @@ pip install -r requirements.txt
 
 ```
 python -m main
-
 ```
 
 ---
@@ -120,7 +114,6 @@ Images
 → Blending (Feather / Weighted)
 → Cropping & Sharpening
 → Final Panorama
-
 ```
 
 ---
