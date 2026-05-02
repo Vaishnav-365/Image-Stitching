@@ -24,6 +24,7 @@ def main():
 
     for i, img in enumerate(images):
         cyl = cylindrical_projection(img)
+        save_image(f"outputs/cylindrical_{i}.jpg", cyl)
         show_image(f"Cylindrical Image {i}", cyl)
 
     print("\nBuilding panorama using pipeline...")
