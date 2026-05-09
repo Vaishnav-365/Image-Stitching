@@ -14,7 +14,7 @@ def main():
     img_paths = [
         "images/img1.png",
         "images/img2.png",
-        "images/img3.png"
+        "images/img3.png",
     ]
 
     images = [resize_if_needed(load_image(p)) for p in img_paths]
@@ -46,15 +46,12 @@ def main():
         save_image(f"outputs/matches_{i}_{j}.jpg", match_img)
         show_image(f"Matches {i} → {j}", match_img)
 
-    panorama, features, matches_dict, pairwise_H, global_H = build_panorama(images)
-
     if panorama is None:
         print("Panorama generation failed. Check logs.")
         return
     save_image("outputs/panorama.jpg", panorama)
     show_image("Final Panorama", panorama)
 
-    print("Final Panorama Size:", panorama.shape)
 
 if __name__ == "__main__":
     main()
